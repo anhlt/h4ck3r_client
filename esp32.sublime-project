@@ -1,0 +1,32 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings":
+	{
+		"LSP":
+		{
+			"ccls":
+			{
+				"enabled": false
+			},
+			"clangd-9":
+			{
+				"enabled": false
+			}
+		},
+		"ecc_flags_sources":
+		[
+			{
+				"file": "Makefile"
+			},
+			{
+				"file": ".clang_complete"
+			}
+		],
+		"ecc_use_libclang": true
+	}
+}
