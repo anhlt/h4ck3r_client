@@ -9,12 +9,16 @@
 #include <WString.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <FS.h>
+#include <ArduinoJson.h>
+#include "SPIFFS.h"
+#include "config.h"
+// #include "smartpointer.h"
 
 // GPIO where the DS18B20 is connected to
 const int oneWireBus = 4;
-const char *ssid = "dhr01-b6373d-g";
-const char *password = "07798419e1301";
 
+const String path = "/config.json";
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
@@ -43,13 +47,20 @@ class MyCallbacks : public BLECharacteristicCallbacks {
 };
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   lcd.init();
   lcd.backlight();
   lcd.clear();
-  lcd.autoscroll();
+  lcd.noAutoscroll();
+  auto config = Config(path);
+  config.readData();
+  auto configData = config.get();
+
 
   Serial.println("Connected to the WiFi network");
+
+  const char *ssid = configData["ssid"];
+  const char *password = configData["password"];
 
   WiFi.begin(ssid, password);
 
@@ -64,8 +75,8 @@ void setup() {
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
   BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID,
-      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+                                         CHARACTERISTIC_UUID,
+                                         BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
 
   pCharacteristic->setCallbacks(new MyCallbacks());
 
