@@ -24,4 +24,5 @@
 
 # sftp configuration file
 sftp-config.json
+persistance_data/
 
