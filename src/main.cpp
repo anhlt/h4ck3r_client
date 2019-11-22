@@ -21,7 +21,7 @@
 
 WebSocketsClient webSocket;
 
-#define USE_SERIAL Serial1
+#define USE_SERIAL Serial
 
 void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
   const uint8_t* src = (const uint8_t*) mem;
@@ -142,10 +142,17 @@ void setup() {
 
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
   pAdvertising->start();
+
+  webSocket.begin("192.168.10.108", 9000, "/socket");
+
+  // event handler
+  webSocket.onEvent(webSocketEvent);
 }
 
 void loop() {
 
+  webSocket.sendTXT("Hello world!");
+  webSocket.loop();
   // if ((WiFi.status() == WL_CONNECTED)) { //Check the current connection
   // status
 
