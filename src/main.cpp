@@ -13,14 +13,14 @@
 #include <ArduinoJson.h>
 #include "SPIFFS.h"
 #include "config.h"
-// #include "smartpointer.h"
-
 #include <WiFiClientSecure.h>
-
 #include <WebSocketsClient.h>
 
-WebSocketsClient webSocket;
+// Config
 
+const String path = "/config.json";
+// WebSocket
+WebSocketsClient webSocket;
 #define USE_SERIAL Serial
 
 void hexdump(const void *mem, uint32_t len, uint8_t cols = 16) {
@@ -73,12 +73,25 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
 
 
 // GPIO where the DS18B20 is connected to
-const int oneWireBus = 4;
+const int oneWireBus = A13;
 
-const String path = "/config.json";
+//
+
+//ledpin
+const int ledR = A18;
+const int ledG = A5;
+const int ledB = A4;
+
+
+// Temprature Setup
 // Setup a oneWire instance to communicate with any OneWire devices
+
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
+
+
+
+
 
 int lcdColumns = 16;
 int lcdRows = 2;
@@ -104,6 +117,16 @@ class MyCallbacks : public BLECharacteristicCallbacks {
 };
 
 void setup() {
+
+  pinMode(ledR, OUTPUT);
+  pinMode(ledG, OUTPUT);
+  pinMode(ledB, OUTPUT);
+  digitalWrite(ledR, HIGH);
+  digitalWrite(ledG, HIGH);
+  digitalWrite(ledB, HIGH);
+
+
+
   Serial.begin(115200);
   lcd.init();
   lcd.backlight();
@@ -147,6 +170,16 @@ void setup() {
 
   // event handler
   webSocket.onEvent(webSocketEvent);
+  //ledc setting
+  //RGB
+  // ledcSetup(0, 12800, 8);
+  // ledcAttachPin(ledR, 0);
+  // ledcSetup(1, 12800, 8);
+  // ledcAttachPin(ledG, 1);
+  // ledcSetup(2, 12800, 8);
+  // ledcAttachPin(ledB, 2);
+
+
 }
 
 void loop() {
@@ -177,13 +210,24 @@ void loop() {
   //   http.end(); //Free the resources
   // }
 
+  digitalWrite(ledR, HIGH); // turn the LED off by making the voltage LOW
+  digitalWrite(ledG, LOW); // turn the LED on
+  digitalWrite(ledB, HIGH); // turn the LED on
+
+
+
   sensors.requestTemperatures();
   float temperatureC = sensors.getTempCByIndex(0);
   Serial.println(temperatureC);
+
+  // ledcWrite(0, 10);
+  // ledcWrite(1, 10);
+  // ledcWrite(2, 10);
   lcd.setCursor(0, 0);
   lcd.print(temperatureC);
   lcd.setCursor(0, 1);
   String localIp = WiFi.localIP().toString();
   lcd.printstr(localIp.c_str());
+
   delay(1000);
 }
