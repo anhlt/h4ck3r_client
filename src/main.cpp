@@ -1,7 +1,4 @@
 #include <Arduino.h>
-#include <BLEDevice.h>
-#include <BLEServer.h>
-#include <BLEUtils.h>
 #include <DallasTemperature.h>
 #include <HTTPClient.h>
 #include <LiquidCrystal_I2C.h>
@@ -11,10 +8,14 @@
 #include <Wire.h>
 #include <FS.h>
 #include <ArduinoJson.h>
-#include "SPIFFS.h"
 #include "config.h"
 #include <WiFiClientSecure.h>
 #include <WebSocketsClient.h>
+#include <WiFiManager.h>
+#include <OneButton.h>
+#include "rgbled.h"
+
+
 
 // Config
 
@@ -82,6 +83,20 @@ const int ledR = A18;
 const int ledG = A5;
 const int ledB = A4;
 
+RgbLed led = RgbLed(ledR, ledG, ledB);
+
+// Button
+
+const int buttonPin = A6;
+
+
+OneButton button = OneButton(buttonPin, true);
+
+void doubleclick() {
+  led.turnOn(BLUE);
+
+  digitalWrite(BUILTIN_LED, HIGH);     // set pin to the opposite state
+}; // doubleclick
 
 // Temprature Setup
 // Setup a oneWire instance to communicate with any OneWire devices
@@ -89,6 +104,30 @@ const int ledB = A4;
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
 
+
+// WIFIMANAGER
+
+#include <Ticker.h>
+Ticker ticker;
+
+void tick()
+{
+  //toggle state
+  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
+  digitalWrite(BUILTIN_LED, !state);     // set pin to the opposite state
+}
+
+//gets called when WiFiManager enters configuration mode
+void configModeCallback (WiFiManager *myWiFiManager) {
+  Serial.println("Entered config mode");
+  Serial.println(WiFi.softAPIP());
+  //if you used auto generated SSID, print it
+  Serial.println(myWiFiManager->getConfigPortalSSID());
+  //entered config mode, make led toggle faster
+  ticker.attach(0.2, tick);
+}
+
+WiFiManager wifiManager;
 
 
 
@@ -98,36 +137,41 @@ int lcdRows = 2;
 
 LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 
-#define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-
-class MyCallbacks : public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic *pCharacteristic) {
-    std::string value = pCharacteristic->getValue();
-    lcd.clear();
-    lcd.setCursor(0, 1);
-    lcd.printstr(&(value[0]));
-    if (value.length() > 0) {
-      Serial.print("\r\nNew value: ");
-      for (int i = 0; i < value.length(); i++)
-        Serial.print(value[i]);
-      Serial.println();
-    }
-  }
-};
 
 void setup() {
-
-  pinMode(ledR, OUTPUT);
-  pinMode(ledG, OUTPUT);
-  pinMode(ledB, OUTPUT);
-  digitalWrite(ledR, HIGH);
-  digitalWrite(ledG, HIGH);
-  digitalWrite(ledB, HIGH);
-
-
-
   Serial.begin(115200);
+
+
+  Serial.print("struct tm *timeinfo");
+
+  pinMode(BUILTIN_LED, OUTPUT);
+  // start ticker with 0.5 because we start in AP mode and try to connect
+
+  //WiFiManager
+  //Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wifiManager;
+  //reset settings - for testing
+  //wifiManager.resetSettings();
+
+  //set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
+  wifiManager.setAPCallback(configModeCallback);
+
+  //fetches ssid and pass and tries to connect
+  //if it does not connect it starts an access point with the specified name
+  //here  "AutoConnectAP"
+  //and goes into a blocking loop awaiting configuration
+  if (!wifiManager.autoConnect()) {
+    Serial.println("failed to connect and hit timeout");
+    //reset and try again, or maybe put it to deep sleep
+    ESP.restart();
+    delay(1000);
+  }
+
+  //if you get here you have connected to the WiFi
+  Serial.println("connected...yeey :)");
+  ticker.detach();
+
+  button.attachClick(doubleclick);
   lcd.init();
   lcd.backlight();
   lcd.clear();
@@ -136,13 +180,12 @@ void setup() {
   config.readData();
   auto configData = config.get();
 
-
   Serial.println("Connected to the WiFi network");
 
-  const char *ssid = configData["ssid"];
-  const char *password = configData["password"];
+  // const char *ssid = configData["ssid"];
+  // const char *password = configData["password"];
 
-  WiFi.begin(ssid, password);
+  // WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -151,78 +194,23 @@ void setup() {
   Serial.println(WiFi.localIP());
   Serial.println("Connected to the WiFi network");
 
-  BLEDevice::init("ESP32 BLE example2");
-  BLEServer *pServer = BLEDevice::createServer();
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-                                         CHARACTERISTIC_UUID,
-                                         BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
-
-  pCharacteristic->setCallbacks(new MyCallbacks());
-
-  pCharacteristic->setValue("Hello World");
-  pService->start();
-
-  BLEAdvertising *pAdvertising = pServer->getAdvertising();
-  pAdvertising->start();
 
   webSocket.begin("192.168.10.108", 9000, "/socket");
-
-  // event handler
   webSocket.onEvent(webSocketEvent);
-  //ledc setting
-  //RGB
-  // ledcSetup(0, 12800, 8);
-  // ledcAttachPin(ledR, 0);
-  // ledcSetup(1, 12800, 8);
-  // ledcAttachPin(ledG, 1);
-  // ledcSetup(2, 12800, 8);
-  // ledcAttachPin(ledB, 2);
+
 
 
 }
 
 void loop() {
 
-  webSocket.sendTXT("Hello world!");
-  webSocket.loop();
-  // if ((WiFi.status() == WL_CONNECTED)) { //Check the current connection
-  // status
-
-  //   Serial.println(WiFi.localIP());
-  //   HTTPClient http;
-
-  //   http.begin("https://httpbin.org/post"); //Specify the URL int httpCode =
-  //   http.POST("{id:1}");                                        //Make the
-  //   request
-
-  //   if (httpCode > 0) { //Check for the returning code
-
-  //       String payload = http.getString();
-  //       Serial.println(httpCode);
-  //       Serial.println(payload);
-  //     }
-
-  //   else {
-  //     Serial.println("Error on HTTP request");
-  //   }
-
-  //   http.end(); //Free the resources
-  // }
-
-  digitalWrite(ledR, HIGH); // turn the LED off by making the voltage LOW
-  digitalWrite(ledG, LOW); // turn the LED on
-  digitalWrite(ledB, HIGH); // turn the LED on
-
-
+  button.tick();
 
   sensors.requestTemperatures();
   float temperatureC = sensors.getTempCByIndex(0);
   Serial.println(temperatureC);
 
-  // ledcWrite(0, 10);
-  // ledcWrite(1, 10);
-  // ledcWrite(2, 10);
+
   lcd.setCursor(0, 0);
   lcd.print(temperatureC);
   lcd.setCursor(0, 1);

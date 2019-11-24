@@ -126,13 +126,6 @@
 	],
 	"settings":
 	{
-		"LSP":
-		{
-			"ccls":
-			{
-				"enabled": false
-			}
-		},
 		"ecc_flags_sources":
 		[
 			{
