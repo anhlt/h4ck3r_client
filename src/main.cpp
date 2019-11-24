@@ -87,15 +87,14 @@ RgbLed led = RgbLed(ledR, ledG, ledB);
 
 // Button
 
-const int buttonPin = A6;
-
-
-OneButton button = OneButton(buttonPin, true);
+OneButton button(A6, true);
 
 void doubleclick() {
   led.turnOn(BLUE);
 
-  digitalWrite(BUILTIN_LED, HIGH);     // set pin to the opposite state
+  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
+
+  Serial.println("Clicked");
 }; // doubleclick
 
 // Temprature Setup
@@ -140,6 +139,7 @@ LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 
 void setup() {
   Serial.begin(115200);
+  button.attachClick(doubleclick);
 
 
   Serial.print("struct tm *timeinfo");
@@ -171,7 +171,6 @@ void setup() {
   Serial.println("connected...yeey :)");
   ticker.detach();
 
-  button.attachClick(doubleclick);
   lcd.init();
   lcd.backlight();
   lcd.clear();
@@ -208,14 +207,10 @@ void loop() {
 
   sensors.requestTemperatures();
   float temperatureC = sensors.getTempCByIndex(0);
-  Serial.println(temperatureC);
-
 
   lcd.setCursor(0, 0);
   lcd.print(temperatureC);
   lcd.setCursor(0, 1);
   String localIp = WiFi.localIP().toString();
   lcd.printstr(localIp.c_str());
-
-  delay(1000);
 }
