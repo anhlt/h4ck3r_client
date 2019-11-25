@@ -23,6 +23,7 @@ void RgbLed::turnOn(Color color)
 
   // ledBをチャネル2へ接続
   state = ON;
+  currentColor = color;
   ledcWrite(0, color.r);
   ledcWrite(1, color.g);
   ledcWrite(2, color.b);
@@ -32,7 +33,20 @@ void RgbLed::turnOff()
 {
   state = OFF;
   ledcWrite(0, 0);
-  ledcWrite(1, 1);
-  ledcWrite(2, 2);
+  ledcWrite(1, 0);
+  ledcWrite(2, 0);
+};
 
+void RgbLed::toggle(){
+  if(state == OFF){
+    state = ON;
+    ledcWrite(0, currentColor.r);
+    ledcWrite(1, currentColor.g);
+    ledcWrite(2, currentColor.b);
+  } else {
+    state = OFF;
+    ledcWrite(0, 0);
+    ledcWrite(1, 1);
+    ledcWrite(2, 2);
+  }
 };

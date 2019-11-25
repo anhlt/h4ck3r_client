@@ -90,7 +90,7 @@ RgbLed led = RgbLed(ledR, ledG, ledB);
 OneButton button(A6, true);
 
 void doubleclick() {
-  led.turnOn(BLUE);
+  led.toggle();
 
   int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
 
@@ -123,7 +123,9 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   //if you used auto generated SSID, print it
   Serial.println(myWiFiManager->getConfigPortalSSID());
   //entered config mode, make led toggle faster
-  ticker.attach(0.2, tick);
+  ticker.attach(0.2, []{
+    led.toggle();
+  });
 }
 
 WiFiManager wifiManager;
@@ -146,7 +148,7 @@ void setup() {
 
   pinMode(BUILTIN_LED, OUTPUT);
   // start ticker with 0.5 because we start in AP mode and try to connect
-
+  led.turnOn(BLUE);
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
@@ -180,11 +182,6 @@ void setup() {
   auto configData = config.get();
 
   Serial.println("Connected to the WiFi network");
-
-  // const char *ssid = configData["ssid"];
-  // const char *password = configData["password"];
-
-  // WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);

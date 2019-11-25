@@ -26,10 +26,11 @@ private:
     int LedBPin;
     float tickInteval;
     LedState state;
+    Color currentColor = RED;
 
 public:
     RgbLed(int ledRPin, int ledGPin, int ledBPin);
-    // void tick(Color color, float inteval);
+    void toggle();
     void turnOn(Color color);
     void turnOff();
 };
