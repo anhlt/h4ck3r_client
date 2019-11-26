@@ -3,10 +3,6 @@ name: Release
 
 on:
   push:
-    # Publish `master` as Docker `latest` image.
-    branches:
-      - master
-
     # Publish `v1.2.3` tags as releases.
     tags:
       - v*
@@ -33,10 +29,6 @@ jobs:
       run: |
         platformio run
         
-  upload:
-    needs: [build]
-    runs-on: [ubuntu-latest]
-    steps:
     - uses: actions/upload-artifact@v1
       with:
         name: firmware.bin
