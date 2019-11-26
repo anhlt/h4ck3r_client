@@ -93,7 +93,6 @@ void doubleclick() {
   led.toggle();
 
   int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
-
   Serial.println("Clicked");
 }; // doubleclick
 
@@ -109,13 +108,6 @@ DallasTemperature sensors(&oneWire);
 #include <Ticker.h>
 Ticker ticker;
 
-void tick()
-{
-  //toggle state
-  int state = digitalRead(BUILTIN_LED);  // get the current state of GPIO1 pin
-  digitalWrite(BUILTIN_LED, !state);     // set pin to the opposite state
-}
-
 //gets called when WiFiManager enters configuration mode
 void configModeCallback (WiFiManager *myWiFiManager) {
   Serial.println("Entered config mode");
@@ -128,25 +120,16 @@ void configModeCallback (WiFiManager *myWiFiManager) {
   });
 }
 
-WiFiManager wifiManager;
-
-
 
 
 int lcdColumns = 16;
 int lcdRows = 2;
-
 LiquidCrystal_I2C lcd(0x27, lcdColumns, lcdRows);
 
 
 void setup() {
   Serial.begin(115200);
   button.attachClick(doubleclick);
-
-
-  Serial.print("struct tm *timeinfo");
-
-  pinMode(BUILTIN_LED, OUTPUT);
   // start ticker with 0.5 because we start in AP mode and try to connect
   led.turnOn(BLUE);
   //WiFiManager
@@ -183,10 +166,7 @@ void setup() {
 
   Serial.println("Connected to the WiFi network");
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi..");
-  }
+
   Serial.println(WiFi.localIP());
   Serial.println("Connected to the WiFi network");
 
@@ -201,10 +181,12 @@ void setup() {
 void loop() {
 
   button.tick();
+  webSocket.loop();
+
 
   sensors.requestTemperatures();
   float temperatureC = sensors.getTempCByIndex(0);
-
+  // webSocket.sendTXT("uint8_t *payload");
   lcd.setCursor(0, 0);
   lcd.print(temperatureC);
   lcd.setCursor(0, 1);
