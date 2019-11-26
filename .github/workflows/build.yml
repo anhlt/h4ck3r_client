@@ -32,7 +32,10 @@ jobs:
     - name: Compile
       run: |
         platformio run
+        
   upload:
+    needs: [build]
+    steps:
     - uses: actions/upload-artifact@v1
       with:
         name: firmware.bin
