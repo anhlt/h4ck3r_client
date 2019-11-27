@@ -58,7 +58,7 @@ jobs:
       id: upload-release-asset-version
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        BIN_URL: ${{ secrets. RELEASE_BIN_URL }}
+        BIN_URL: ${{ secrets.RELEASE_BIN_URL }}
         TAG_NAME: ${{ github.ref }}
       run: |
         md5value=$(md5sum .pio/build/esp32doit-devkit-v1/firmware.bin |cut -f 1 -d " ")
