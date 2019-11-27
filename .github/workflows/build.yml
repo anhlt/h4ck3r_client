@@ -54,3 +54,15 @@ jobs:
         asset_path: .pio/build/esp32doit-devkit-v1/firmware.bin
         asset_name: firmware.bin
         asset_content_type: application/octet-stream
+    - name: Create Release info
+      id: upload-release-asset-version
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        BIN_URL: ${{ secrets. RELEASE_BIN_URL }}
+        TAG_NAME: ${{ github.ref }}
+      run: |
+        md5value=$(md5sum .pio/build/esp32doit-devkit-v1/firmware.bin |cut -f 1 -d " ")
+        echo $BIN_URL >> release_info.txt
+        echo $TAG_NAME >> release_info.txt
+        echo $md5value >> release_info.txt
+        cat release_info.txt
