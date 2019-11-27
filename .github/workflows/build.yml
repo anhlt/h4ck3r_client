@@ -68,3 +68,13 @@ jobs:
         echo $md5value >> release_info.txt
         echo $TAG_NAME | cut -c 12- >> release_info.txt
         cat release_info.txt
+    - name: Upload Release Info
+      id: upload-release-info
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+        asset_path: ./release_info.txt
+        asset_name: release_info.txt
+        asset_content_type: text/plain
