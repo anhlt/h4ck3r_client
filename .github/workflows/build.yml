@@ -63,6 +63,7 @@ jobs:
       run: |
         md5value=$(md5sum .pio/build/esp32doit-devkit-v1/firmware.bin |cut -f 1 -d " ")
         echo $BIN_URL >> release_info.txt
-        echo $TAG_NAME >> release_info.txt
+        cat version_info.txt >> release_info.txt
         echo $md5value >> release_info.txt
+        echo $TAG_NAME | cut -c 12- >> release_info.txt
         cat release_info.txt
