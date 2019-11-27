@@ -62,6 +62,7 @@ jobs:
         TAG_NAME: ${{ github.ref }}
       run: |
         md5value=$(md5sum .pio/build/esp32doit-devkit-v1/firmware.bin |cut -f 1 -d " ")
+        cat version_info.txt
         echo $BIN_URL >> release_info.txt
         cat version_info.txt >> release_info.txt
         echo $md5value >> release_info.txt
