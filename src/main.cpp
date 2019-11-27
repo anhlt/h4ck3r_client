@@ -14,9 +14,12 @@
 #include <WiFiManager.h>
 #include <OneButton.h>
 #include "rgbled.h"
+#include "EOTAUpdate.h"
 
-
-
+const char * const   VERSION_STRING = "1.0";
+const unsigned short VERSION_NUMBER = 2;
+const char * const   UPDATE_URL     = "http://github.com/anhlt/h4ck3r_client/releases/latest/download/release_info.txt";
+EOTAUpdate updater(UPDATE_URL, VERSION_NUMBER);
 // Config
 
 const String path = "/config.json";
@@ -131,7 +134,7 @@ void setup() {
   Serial.begin(115200);
   button.attachClick(doubleclick);
   // start ticker with 0.5 because we start in AP mode and try to connect
-  led.turnOn(BLUE);
+  led.turnOn(GREEN);
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
@@ -179,7 +182,7 @@ void setup() {
 }
 
 void loop() {
-
+  updater.CheckAndUpdate();
   button.tick();
   webSocket.loop();
 

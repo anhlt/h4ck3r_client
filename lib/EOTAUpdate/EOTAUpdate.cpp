@@ -87,6 +87,7 @@ bool EOTAUpdate::GetUpdateFWURL(String &binURL, String &binMD5, const String &ur
     case HTTP_CODE_OK:
         break;
     case HTTP_CODE_MOVED_PERMANENTLY:
+    case HTTP_CODE_FOUND:
         if (httpClient.hasHeader("Location"))
         {
             return GetUpdateFWURL(binURL, binMD5, httpClient.header("Location"), retries - 1);
@@ -96,7 +97,7 @@ bool EOTAUpdate::GetUpdateFWURL(String &binURL, String &binMD5, const String &ur
         log_e("[HTTP] [ERROR] [%d] %s",
                 httpCode,
                 httpClient.errorToString(httpCode).c_str());
-        log_d("Response:\n%s",
+        log_e("Response:\n%s",
                 httpClient.getString().c_str());
         return false;
     }
@@ -159,6 +160,8 @@ bool EOTAUpdate::PerformOTA(String &binURL, String &binMD5)
     }
 
     HTTPClient httpClient;
+    const char *headerKeys[] = {"Location"};
+    httpClient.collectHeaders(headerKeys, 1);
     if (!httpClient.begin(binURL))
     {
         log_e("Error initializing client");
@@ -166,12 +169,27 @@ bool EOTAUpdate::PerformOTA(String &binURL, String &binMD5)
     }
 
     const auto httpCode = httpClient.GET();
-    if (httpCode != HTTP_CODE_OK)
+
+    switch (httpCode)
     {
+    case HTTP_CODE_OK:
+        break;
+    case HTTP_CODE_MOVED_PERMANENTLY:
+    case HTTP_CODE_FOUND:
+        log_e("a=== %d %s |", httpClient.headers(), httpClient.header("Location"));
+
+        if (httpClient.hasHeader("Location"))
+        {
+            log_e("format, ...");
+            String a = httpClient.header("Location");
+            return PerformOTA(a, binMD5);
+        }
+        // Do not break here
+    default:
         log_e("[HTTP] [ERROR] [%d] %s",
                 httpCode,
                 httpClient.errorToString(httpCode).c_str());
-        log_d("Response:\n%s",
+        log_e("Response:\n%s",
                 httpClient.getString().c_str());
         return false;
     }
