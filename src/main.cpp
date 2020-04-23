@@ -134,7 +134,7 @@ void setup() {
   Serial.begin(115200);
   button.attachClick(doubleclick);
   // start ticker with 0.5 because we start in AP mode and try to connect
-  led.turnOn(GREEN);
+  led.turnOn(RED);
   //WiFiManager
   //Local intialization. Once its business is done, there is no need to keep it around
   WiFiManager wifiManager;
